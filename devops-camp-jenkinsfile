@@ -29,7 +29,7 @@ pipeline {
         stage('Application docker build') {
             steps {
                 echo "Building application image"
-                //TODO("Lab 4 - Artifact Management"): build the docker app image
+                //Lab 4: build the docker app image
                 withCredentials([usernameColonPassword(credentialsId: 's-subotic-harbor-auth', variable: 'HARBOR-AUTH')]) {
                     script {
                         sh 'docker build -t $APP_IMAGE_NAME-$COMMIT_HASH -f ./app/Dockerfile ./afs-labs-student'
@@ -85,7 +85,7 @@ pipeline {
                 }
             }
         }
-        
+
         //TODO("Lab 7 - Automated Security Scans"): add a stage
         stage('Deploy') {
             steps {
