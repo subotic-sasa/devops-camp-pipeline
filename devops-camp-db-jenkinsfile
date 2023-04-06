@@ -8,9 +8,26 @@ pipeline {
         HARBOR_PROJECT = 's-subotic-harbor-project'
         DB_IMAGE_NAME = 'db'
     }
+    
     stages {
         stage('Application repository') {
-            stage('DB changes: true') {
+            steps {
+                echo "Cloning application repository"
+                sh 'git clone https://github.com/subotic-sasa/devops-camp-pipeline.git'
+                dir('afs-labs-student') {
+                    withCredentials([usernamePassword(credentialsId: 's-subotic-harbor-auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    script {
+                        env.BUILD_DB = sh(script: 'python check_harbor_db.py -h $COMMIT_HASH -i $DB_IMAGE_NAME -r $HARBOR_REGISTRY -p $HARBOR_PROJECT -c ${USERNAME}:${PASSWORD}', returnStdout: true).trim()
+                    }
+                }
+                    script {
+                        env.COMMIT_HASH = sh(script: 'git log --format=format:%h -1 --follow database/database.sql', returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+
+        stage('DB changes: true') {
            when {
               environment name: 'BUILD_DB', value: 'true'
            }
@@ -51,21 +68,7 @@ pipeline {
               }
            }
         }
-            steps {
-                echo "Cloning application repository"
-                sh 'git clone https://github.com/subotic-sasa/devops-camp-pipeline.git'
-                dir('afs-labs-student') {
-                    withCredentials([usernamePassword(credentialsId: 's-subotic-harbor-auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    script {
-                        env.BUILD_DB = sh(script: 'python check_harbor_db.py -h $COMMIT_HASH -i $DB_IMAGE_NAME -r $HARBOR_REGISTRY -p $HARBOR_PROJECT -c ${USERNAME}:${PASSWORD}', returnStdout: true).trim()
-                    }
-                }
-                    script {
-                        env.COMMIT_HASH = sh(script: 'git log --format=format:%h -1 --follow database/database.sql', returnStdout: true).trim()
-                    }
-                }
-            }
-        }
+
     }
     post {
         cleanup {
